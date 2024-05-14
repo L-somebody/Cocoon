@@ -1,0 +1,16 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/lcy/MyProjects/Test/study/MathFunctions/mysqrt.cpp
+mysqrt.h
+/home/lcy/MyProjects/Test/study/MathFunctions/mysqrt.h
+iostream
+-
+
+/home/lcy/MyProjects/Test/study/MathFunctions/mysqrt.h
+
