@@ -5,7 +5,7 @@ int main() {
     std::unique_ptr<TcpServer> server = std::make_unique<TcpServer>();
 
     Signal::signal(SIGINT, [&] {
-        server.release();
+        server.reset();
         std::cout << "\nServer exit!" << std::endl;
         exit(0);
     });
