@@ -6,7 +6,7 @@
 */
 
 #pragma once
-#include "Macros.h"
+#include "common.h"
 
 #include <functional>
 
@@ -14,31 +14,36 @@ class Socket;
 class EventLoop;
 class Channel {
 public:
-  Channel(EventLoop *_loop, int _fd);
-  ~Channel();
+    DISALLOW_COPY_AND_MOVE(Channel);
 
-  DISALLOW_COPY_AND_MOVE(Channel);
+    Channel(int fd, EventLoop *_loop);
+    ~Channel();
 
-  void handleEvent();
-  void enableRead();
+    void HandleEvent() const;
+    void EnableRead();
+    void EnableWrite();
 
-  int getFd();
-  uint32_t getListenEvents();
-  uint32_t getReadyEvents();
-  bool getInEpoll();
-  void setInEpoll(bool _in = true);
+    int fd() const;
+    short listen_events() const;
+    short ready_events() const;
+    bool exist() const;
+    void set_exist(bool _in = true);
+    void EnableET();
 
-  void useET();
+      void set_ready_events(int ev);
+      void set_read_callback(std::function<void()> const &_callback);
+      void set_write_callback(std::function<void()> const &_callback);
 
-  void setReadyEvents(uint32_t ev);
-  void setReadCallback(std::function<void()> const &_callback);
+      static const int READ_EVENT;
+      static const int WRITE_EVENT;
+      static const int ET;
 
 private:
-  EventLoop *loop_;
-  int fd_;
-  uint32_t listen_events_;
-  uint32_t ready_events_;
-  bool in_epoll_;
-  std::function<void()> read_callback_;
-  std::function<void()> write_callback_;
+      EventLoop *loop_; // related to an event loop
+      int fd_;
+      short listen_events_;
+      short ready_events_;
+      bool exist_;
+      std::function<void()> read_callback_;
+      std::function<void()> write_callback_;
 };

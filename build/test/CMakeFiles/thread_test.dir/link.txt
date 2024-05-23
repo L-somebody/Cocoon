@@ -1,1 +1,0 @@
-/usr/bin/c++   -fPIC -Wall -Wextra -std=c++17 -pthread   -fPIC CMakeFiles/thread_test.dir/thread_test.cpp.o  -o ../bin/thread_test  -Wl,-rpath,/home/lcy/MyProjects/Test/build/lib ../lib/libpine_shared.so 

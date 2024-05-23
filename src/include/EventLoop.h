@@ -1,23 +1,18 @@
 #pragma once
-#include "Macros.h"
+#include "common.h"
+#include <memory>
 
-#include <functional>
-
-class Epoll;
-class Channel;
 class EventLoop {
-private:
-  Epoll *epoll_{nullptr};
-  bool quit_{false};
-
 public:
-  EventLoop();
-  ~EventLoop();
+    DISALLOW_COPY_AND_MOVE(EventLoop);
+    EventLoop();
+    ~EventLoop();
 
-  DISALLOW_COPY_AND_MOVE(EventLoop);
 
-  void loop();
-  void updateChannel(Channel *ch);
+    void Loop() const;
+    void UpdateChannel(Channel *ch) const;
+    void DeleteChannel(Channel *ch) const;
 
-  void addThread(std::function<void()>);
+private:
+    std::unique_ptr<Poller> poller_;
 };

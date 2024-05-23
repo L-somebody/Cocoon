@@ -1,7 +1,10 @@
 #pragma once
-#include <functional>
 
-#include "Macros.h"
+#include <functional>
+#include <memory>
+
+#include "common.h"
+
 
 class EventLoop;
 class Socket;
@@ -13,12 +16,11 @@ public:
 
   DISALLOW_COPY_AND_MOVE(Acceptor);
 
-  void acceptConnection();
-  void setNewConnectionCallback(std::function<void(Socket *)> const &callback);
+  RC AcceptConnection() const;
+  void set_new_connection_callback(std::function<void(int)> const &callback);
 
 private:
-  EventLoop *loop_;
-  Socket *sock_;
-  Channel *channel_;
-  std::function<void(Socket *)> new_connection_callback_;
+  std::unique_ptr<Socket> socket_;
+  std::unique_ptr<Channel> channel_;
+  std::function<void(int)> new_connection_callback_;
 };

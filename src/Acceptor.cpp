@@ -1,36 +1,40 @@
-#include <utility>
-
 #include "Acceptor.h"
+
+#include <utility>
+#include <fcntl.h>
+#include <cassert>
+
 #include "Channel.h"
 #include "Socket.h"
 
-Acceptor::Acceptor(EventLoop *_loop) : loop_(_loop), sock_(nullptr), channel_(nullptr) {
-  sock_ = new Socket();
-  InetAddress *addr = new InetAddress("127.0.0.1", 1234);
-  sock_->Bind(addr);
-  sock_->Listen();
-  // sock->setnonblocking();
-  channel_ = new Channel(loop_, sock_->GetFd());
-  std::function<void()> cb = std::bind(&Acceptor::acceptConnection, this);
-  channel_->setReadCallback(cb);
-  channel_->enableRead();
-  delete addr;
+Acceptor::Acceptor(EventLoop *loop) {
+    socket_ = std::make_unique<Socket>();
+    assert(socket_->Create() == RC_SUCCESS);
+    assert(socket_->Bind("127.0.0.1", 1234) == RC_SUCCESS);
+    assert(socket_->Listen() == RC_SUCCESS);
+
+    channel_ = std::make_unique<Channel>(socket_->fd(), loop);
+    std::function<void()> cb = std::bind(&Acceptor::AcceptConnection, this);
+
+    channel_->set_read_callback(cb);
+    channel_->EnableRead();
 }
 
-Acceptor::~Acceptor() {
-  delete sock_;
-  delete channel_;
+Acceptor::~Acceptor() {}
+
+RC Acceptor::AcceptConnection() const{
+    int clnt_fd = -1;
+    if( socket_->Accept(clnt_fd) != RC_SUCCESS ) {
+        return RC_ACCEPTOR_ERROR;
+    }
+    // TODO: remove
+    fcntl(clnt_fd, F_SETFL, fcntl(clnt_fd, F_GETFL) | O_NONBLOCK);  // 新接受到的连接设置为非阻塞式
+    if (new_connection_callback_) {
+        new_connection_callback_(clnt_fd);
+    }
+    return RC_SUCCESS;
 }
 
-void Acceptor::acceptConnection() {
-  InetAddress *clnt_addr = new InetAddress();
-  Socket *clnt_sock = new Socket(sock_->Accept(clnt_addr));
-  printf("new client fd %d! IP: %s Port: %d\n", clnt_sock->GetFd(), clnt_addr->GetIp(), clnt_addr->GetPort());
-  clnt_sock->SetNonBlocking();
-  new_connection_callback_(clnt_sock);
-  delete clnt_addr;
-}
-
-void Acceptor::setNewConnectionCallback(std::function<void(Socket *)> const &callback) {
-  new_connection_callback_ = callback;
+void Acceptor::set_new_connection_callback(std::function<void(int)> const &callback) {
+    new_connection_callback_ = std::move(callback);
 }

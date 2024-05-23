@@ -1,55 +1,53 @@
 #pragma once
-#include "Macros.h"
-
 #include <functional>
+#include <memory>
+#include "common.h"
 
-class Socket;
-class EventLoop;
-class Channel;
-class Buffer;
 class Connection {
 public:
-  enum State {
-    Invalid = 1,
-    Handshaking,
-    Connected,
-    Closed,
-    Failed,
-  };
-  Connection(EventLoop *_loop, Socket *_sock);
-  ~Connection();
-  DISALLOW_COPY_AND_MOVE(Connection);
+    enum State {
+        Invalid = 0,
+        Connecting,
+        Connected,
+        Closed,
+    };
+    DISALLOW_COPY_AND_MOVE(Connection);
+    Connection(int fd, EventLoop *loop);
+    ~Connection();
 
-  void read();
-  void write();
+    void set_delete_connection(std::function<void(int)> const &fn);
+    // void set_on_connect(std::function<void(Connection *)> const &fn);
+    void set_on_recv(std::function<void(Connection *)> const &fn);
+    State state() const;
+    Socket *socket() const;
+    void set_send_buf(const char *str);
+    Buffer *read_buf();
+    Buffer *send_buf();
 
-  void setDeleteConnectionCallback(std::function<void(Socket *)> const &callback);
-  void setOnConnectCallback(std::function<void(Connection *)> const &callback);
-  State getState();
-  void close();
-  void setSendBuffer(const char *str);
-  Buffer *getReadBuffer();
-  const char *readBuffer();
-  Buffer *getSendBuffer();
-  const char *sendBuffer();
-  void getlineSendBuffer();
-  Socket *getSocket();
+    RC Read();
+    RC Write();
+    RC Send(std::string msg);
 
-  void onConnect(std::function<void()> fn);
+    void Close();
+
+    // void onConnect(std::function<void()> fn);
+    // void onMessage(std::function<void()> fn);
 
 private:
-  EventLoop *loop_;
-  Socket *sock_;
-  Channel *channel_{nullptr};
-  State state_{State::Invalid};
-  Buffer *read_buffer_{nullptr};
-  Buffer *send_buffer_{nullptr};
-  std::function<void(Socket *)> delete_connection_callback_;
+    void Business();
+    RC ReadNonBlocking();
+    RC WriteNonBlocking();
+    RC ReadBlocking();
+    RC WriteBlocking();
 
-  std::function<void(Connection *)> on_connect_callback_;
+private:
+    std::unique_ptr<Socket> socket_;
+    std::unique_ptr<Channel> channel_;
 
-  void readNonBlocking();
-  void writeNonBlocking();
-  void readBlocking();
-  void writeBlocking();
+    State state_;
+    std::unique_ptr<Buffer> read_buf_;
+    std::unique_ptr<Buffer> send_buf_;
+
+    std::function<void(int)> delete_connection_;
+    std::function<void(Connection *)> on_recv_;
 };

@@ -1,21 +1,20 @@
 #include "EventLoop.h"
-#include "Channel.h"
-#include "Epoll.h"
-#include "ThreadPool.h"
 #include <vector>
+#include "Channel.h"
+#include "Poller.h"
 
-EventLoop::EventLoop() { epoll_ = new Epoll(); }
+EventLoop::EventLoop() { poller_ = std::make_unique<Poller>(); }
 
-EventLoop::~EventLoop() { delete epoll_; }
+EventLoop::~EventLoop() {}
 
-void EventLoop::loop() {
-  while (!quit_) {
-    std::vector<Channel *> chs;
-    chs = epoll_->poll();
-    for (auto &ch : chs) {
-      ch->handleEvent();
+void EventLoop::Loop() const {
+    while (true) {
+        for (Channel *active_ch : poller_->Poll()) {
+            active_ch->HandleEvent();
+        }
     }
-  }
 }
 
-void EventLoop::updateChannel(Channel *ch) { epoll_->updateChannel(ch); }
+void EventLoop::UpdateChannel(Channel *ch) const { poller_->UpdateChannel(ch); }
+
+void EventLoop::DeleteChannel(Channel *ch) const { poller_->DeleteChannel(ch); }

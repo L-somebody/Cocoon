@@ -8,19 +8,21 @@
 #include <thread>
 #include <utility>
 #include <vector>
-#include "Macros.h"
+#include "common.h"
 
 class ThreadPool {
 private:
-  std::vector<std::thread> threads;
-  std::queue<std::function<void()>> tasks;
-  std::mutex tasks_mtx;
-  std::condition_variable cv;
-  bool stop;
+  std::vector<std::thread> workers_;
+  std::queue<std::function<void()>> tasks_;
+  std::mutex queue_mutex_;
+  std::condition_variable condition_variable_;
+  std::atomic<bool> stop{false};
 
 public:
-  ThreadPool(int size = std::thread::hardware_concurrency());
+  explicit ThreadPool(unsigned int size = std::thread::hardware_concurrency());
   ~ThreadPool();
+
+    DISALLOW_COPY_AND_MOVE(ThreadPool);
 
   template <class F, class... Args>
   auto add(F &&f, Args &&... args)
@@ -45,16 +47,16 @@ auto ThreadPool::add(F &&f, Args &&... args)
   std::future<return_type> res =
       task->get_future(); // std::packaged_task封装有期物
   { // 进入临界区，操作所有线程共有的线程池
-    std::unique_lock<std::mutex> lock(tasks_mtx); // 锁住
+    std::unique_lock<std::mutex> lock(queue_mutex_); // 锁住
 
     if (stop) {
       throw std::runtime_error("enqueue on stopped ThreadPool");
     }
 
-    tasks.emplace([task]() {
+    tasks_.emplace([task]() {
       (*task)();
     }); // 通过lambda表达式，生成调用智能指针（task）指向的可调用对象的函数对象
   }
-  cv.notify_one(); // 无条件唤醒一个线程
+  condition_variable_.notify_one(); // 无条件唤醒一个线程
   return res;
 } // 将任务添加之后，会从线程池取得一个线程进行运行，返回期物对象

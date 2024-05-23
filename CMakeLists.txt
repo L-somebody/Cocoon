@@ -27,6 +27,7 @@ if(NOT DEFINED CLANG_FORMAT_BIN)
             NAMES clang-format clang-format-8
             HINTS ${PINE_CLANG_SEARCH_PATH})
 endif()
+set(CLANG_FORMAT_BIN "/usr/bin/clang-format")
 if("${CLANG_FORMAT_BIN}" STREQUAL "CLANG_FORMAT_BIN-NOTFOUND")
     message(WARNING "Pine/main couldn't find clang-format.")
 else()
@@ -64,6 +65,14 @@ endif ()
 ######################################################################################################################
 # COMPILER SETUP
 ######################################################################################################################
+# OS
+if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    message(STATUS "Platform: macOS")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DOS_MACOS")
+elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    message(STATUS "Platform: Linux")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DOS_LINUX")
+endif ()
 
 # Compiler flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -Wall -Wextra -std=c++17 -pthread")

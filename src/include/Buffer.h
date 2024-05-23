@@ -1,21 +1,21 @@
 #pragma once
 #include <string>
-#include "Macros.h"
+#include "common.h"
 
 class Buffer {
-private:
-  std::string buf;
-
 public:
-  Buffer() = default;
-  ~Buffer() = default;
+    DISALLOW_COPY_AND_MOVE(Buffer);
+    Buffer() = default;
+    ~Buffer() = default;
 
-  DISALLOW_COPY_AND_MOVE(Buffer);
+    const std::string &buf() const;
+    const char* c_str() const;
+    void set_buf(const char *buf);
 
-  void append(const char *_str, int _size);
-  ssize_t size();
-  const char *toStr();
-  void clear();
-  void getLine();
-  void setBuf(const char *);
+    size_t Size() const;
+    void Append(const char *_str, int _size);
+    void Clear();
+
+private:
+    std::string buf_;
 };
